@@ -26,7 +26,8 @@ ask_for_confirmation() {
 # See https://cdn.rawgit.com/VirtualGL/virtualgl/2.5/doc/index.html#hd006
 echo -e "Configuring VirtualGL..." 
 sudo /opt/VirtualGL/bin/vglserver_config
-sudo usermod -a -G vglusers ubuntu
+#sudo usermod -a -G vglusers ubuntu
+sudo usermod -a -G vglusers nic
 echo -e "\n" 
 
 # Install xfce4

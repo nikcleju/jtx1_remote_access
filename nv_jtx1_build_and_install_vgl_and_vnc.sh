@@ -17,30 +17,36 @@ sudo apt-get install cmake
 sudo apt-get install g++
 sudo apt-get install libpam0g-dev
 sudo apt-get install libssl-dev
+sudo apt-get install libxtst-dev
 
 # LIBJPEG-TURBO
 
 # Build and install libjpeg-turbo
 git clone https://github.com/libjpeg-turbo/libjpeg-turbo.git
 mkdir libjpeg-turbo-build
-cd libjpeg-turbo
-autoreconf -fiv
-cd ../libjpeg-turbo-build
-sh ../libjpeg-turbo/configure
-make
-# Change "DEBARCH=aarch64" to "DEBARCH=arm64"
-sed -i 's/aarch64/arm64/g' pkgscripts/makedpkg.tmpl
+#cd libjpeg-turbo
+#autoreconf -fiv
+#cd ../libjpeg-turbo-build
+#sh ../libjpeg-turbo/configure
+# Nicolae Cleju 2020-1-027
+cd libjpeg-turbo-build
+cmake -G"Unix Makefiles" ../libjpeg-turbo
+make -j$(nproc)
+sudo make install
+## Change "DEBARCH=aarch64" to "DEBARCH=arm64"
+#sed -i 's/aarch64/arm64/g' pkgscripts/makedpkg.tmpl
 make deb
-# sudo dpkg -i libjpeg-turbo_1.5.2_arm64.deb
+# Nicolae Cleju: update the name here, according to the current version!
+sudo dpkg -i libjpeg-turbo_2.0.6_arm64.deb
 cd ../
 
 # VIRTUALGL
 
-# Preventing link error from "libGL.so", check this:
-# https://devtalk.nvidia.com/default/topic/946136/jetson-tx1/building-an-opengl-application/
-cd /usr/lib/aarch64-linux-gnu
-sudo rm libGL.so
-sudo ln -s /usr/lib/aarch64-linux-gnu/tegra/libGL.so libGL.so
+## Preventing link error from "libGL.so", check this:
+## https://devtalk.nvidia.com/default/topic/946136/jetson-tx1/building-an-opengl-application/
+#cd /usr/lib/aarch64-linux-gnu
+#sudo rm libGL.so
+#sudo ln -s /usr/lib/aarch64-linux-gnu/tegra/libGL.so libGL.so
 
 # Build and install VirtualGL
 cd $currentDir
@@ -49,12 +55,13 @@ mkdir virtualgl-build
 cd virtualgl-build
 cmake -G "Unix Makefiles" -DTJPEG_LIBRARY="-L/opt/libjpeg-turbo/lib64/ -lturbojpeg" ../virtualgl
 make
-# Change "DEBARCH=aarch64" to "DEBARCH=arm64"
-sed -i 's/aarch64/arm64/g' pkgscripts/makedpkg
-# Change "Architecture: aarch64" to "Architecture: arm64"
-sed -i 's/aarch64/arm64/g' pkgscripts/deb-control
+## Change "DEBARCH=aarch64" to "DEBARCH=arm64"
+#sed -i 's/aarch64/arm64/g' pkgscripts/makedpkg
+## Change "Architecture: aarch64" to "Architecture: arm64"
+#sed -i 's/aarch64/arm64/g' pkgscripts/deb-control
 make deb
-# sudo dpkg -i sudo dpkg -i virtualgl_2.5.2_arm64.deb
+# Nicolae Cleju: update the name here, according to the current version!
+sudo dpkg -i sudo dpkg -i virtualgl_2.6.5_arm64.deb
 cd ..
 
 # TURBOVNC
@@ -66,24 +73,26 @@ mkdir turbovnc-build
 cd turbovnc-build
 cmake -G "Unix Makefiles" -DTVNC_BUILDJAVA=0 -DTJPEG_LIBRARY="-L/opt/libjpeg-turbo/lib64/ -lturbojpeg" ../turbovnc
 
-# Prevent error like #error "GLYPHPADBYTES must be 4",
-# edit ../turbovnc/unix/Xvnc/programs/Xserver/include/servermd.h
-# and prepend before "#ifdef __avr32__"
-servermd="$currentDir/turbovnc/unix/Xvnc/programs/Xserver/include/servermd.h"
-line="#ifdef __avr32__"
-defs="#ifdef __aarch64__\n\
-# define IMAGE_BYTE_ORDER       LSBFirst\n\
-# define BITMAP_BIT_ORDER       LSBFirst\n\
-# define GLYPHPADBYTES          4\n\
-#endif\n"
-sed -i "/$line/i $defs" "$servermd"
+## Prevent error like #error "GLYPHPADBYTES must be 4",
+## edit ../turbovnc/unix/Xvnc/programs/Xserver/include/servermd.h
+## and prepend before "#ifdef __avr32__"
+#servermd="$currentDir/turbovnc/unix/Xvnc/programs/Xserver/include/servermd.h"
+#line="#ifdef __avr32__"
+#defs="#ifdef __aarch64__\n\
+## define IMAGE_BYTE_ORDER       LSBFirst\n\
+## define BITMAP_BIT_ORDER       LSBFirst\n\
+## define GLYPHPADBYTES          4\n\
+##endif\n"
+#sed -i "/$line/i $defs" "$servermd"
 make
-# Change "DEBARCH=aarch64" to "DEBARCH=arm64"
-sed -i 's/aarch64/arm64/g' pkgscripts/makedpkg
-# Change "Architecture: aarch64" to "Architecture: arm64"
-sed -i 's/aarch64/arm64/g' pkgscripts/deb-control
+## Change "DEBARCH=aarch64" to "DEBARCH=arm64"
+#sed -i 's/aarch64/arm64/g' pkgscripts/makedpkg
+## Change "Architecture: aarch64" to "Architecture: arm64"
+#sed -i 's/aarch64/arm64/g' pkgscripts/deb-control
+# Nicolae Cleju: skip icons in deb
+sed -i 's|''safedirmove \$TMPDIR\/\$DATADIR\/icons \$TMPDIR\/usr\/share\/icons \$TMPDIR\/__tmpicons''|''### safedirmove \$TMPDIR\/\$DATADIR\/icons \$TMPDIR\/usr\/share\/icons \$TMPDIR\/__tmpicons\n\ttrue''|g' pkgscripts/makedpkg
 make deb
-# sudo dpkg -i turbovnc_2.1.1_arm64.deb
+sudo dpkg -i turbovnc_2.2.6_arm64.deb
 
 # SYSTEM
 
